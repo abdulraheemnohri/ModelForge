@@ -10,7 +10,7 @@ const ModelManager = () => {
 
   const fetchModels = async () => {
     try {
-      const response = await api.get('/models');
+      const response = await api.get('models');
       setModels(response.data);
       setLoading(false);
     } catch (error) {
@@ -25,7 +25,7 @@ const ModelManager = () => {
   const handleStart = async (modelName) => {
     const port = 9000 + models.findIndex(m => m.name === modelName);
     try {
-      await api.post(`/models/${modelName}/start?port=${port}`);
+      await api.post(`models/${modelName}/start?port=${port}`);
       fetchModels();
     } catch (error) {
       console.error("Error starting model:", error);
@@ -34,7 +34,7 @@ const ModelManager = () => {
 
   const handleStop = async (modelName) => {
     try {
-      await api.post(`/models/${modelName}/stop`);
+      await api.post(`models/${modelName}/stop`);
       fetchModels();
     } catch (error) {
       console.error("Error stopping model:", error);
@@ -44,7 +44,7 @@ const ModelManager = () => {
   const handleDelete = async (modelName) => {
     if (!confirm(`Are you sure you want to delete ${modelName}?`)) return;
     try {
-      await api.delete(`/models/${modelName}`);
+      await api.delete(`models/${modelName}`);
       fetchModels();
     } catch (error) {
       console.error("Error deleting model:", error);
@@ -53,7 +53,7 @@ const ModelManager = () => {
 
   const handleRegenerateKey = async (modelName) => {
     try {
-      await api.post(`/models/${modelName}/regenerate-key`);
+      await api.post(`models/${modelName}/regenerate-key`);
       fetchModels();
     } catch (error) {
       console.error("Error regenerating key:", error);
@@ -64,7 +64,7 @@ const ModelManager = () => {
     e.preventDefault();
     try {
       const config = JSON.parse(newModel.config);
-      await api.post('/models', { ...newModel, config });
+      await api.post('models', { ...newModel, config });
       setShowAddModal(false);
       setNewModel({ name: '', engine: 'llama_cpp', path: '', config: '{}' });
       fetchModels();
@@ -142,20 +142,22 @@ const ModelManager = () => {
               </div>
             </div>
 
-            <div className="bg-slate-900/50 p-3 rounded-lg flex items-center justify-between mt-2">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Model API Key</span>
-                <span className="font-mono text-sm text-slate-300">{model.api_key}</span>
+            {model.api_key && (
+              <div className="bg-slate-900/50 p-3 rounded-lg flex items-center justify-between mt-2">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Model API Key</span>
+                  <span className="font-mono text-sm text-slate-300">{model.api_key}</span>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => copyToClipboard(model.api_key)} className="p-2 hover:bg-slate-700 rounded-lg text-slate-400" title="Copy Key">
+                    <Copy size={16} />
+                  </button>
+                  <button onClick={() => handleRegenerateKey(model.name)} className="p-2 hover:bg-slate-700 rounded-lg text-slate-400" title="Regenerate Key">
+                    <RefreshCw size={16} />
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => copyToClipboard(model.api_key)} className="p-2 hover:bg-slate-700 rounded-lg text-slate-400" title="Copy Key">
-                  <Copy size={16} />
-                </button>
-                <button onClick={() => handleRegenerateKey(model.name)} className="p-2 hover:bg-slate-700 rounded-lg text-slate-400" title="Regenerate Key">
-                  <RefreshCw size={16} />
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         ))}
       </div>

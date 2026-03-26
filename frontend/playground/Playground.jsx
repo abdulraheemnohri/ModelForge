@@ -13,7 +13,7 @@ const Playground = () => {
 
   const fetchModels = async () => {
     try {
-      const response = await api.get('/models');
+      const response = await api.get('models');
       const runningModels = response.data.filter(m => m.status === 'running');
       setModels(runningModels);
       if (runningModels.length > 0 && !selectedModel) setSelectedModel(runningModels[0]);

@@ -41,10 +41,11 @@ def setup_db():
     yield
     Base.metadata.drop_all(bind=engine)
 
-def test_root():
-    response = client.get("/")
+def test_health():
+    # Note: in main.py it is app.get("/api/health")
+    response = client.get("/api/health")
     assert response.status_code == 200
-    assert response.json() == {"message": "Welcome to ModelForge API"}
+    assert response.json() == {"status": "ok"}
 
 def test_list_models():
     response = client.get("/api/models", headers={"Authorization": "Bearer test_key"})
@@ -57,7 +58,6 @@ def test_add_and_delete_model():
                            json={"name": "new_model", "engine": "llama_cpp", "path": "/path", "config": {}})
     assert response.status_code == 200
     data = response.json()
-    print(f"DEBUG: {data}")
     assert data["name"] == "new_model"
 
     # Delete
