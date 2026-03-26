@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from backend.database import get_db, Model, User, APIKey, generate_api_key
-from backend.auth import get_current_user, check_admin_role, verify_model_access
+from backend.auth import get_current_user, check_admin_role
 from backend.model_manager import ModelManager
 from backend.resource_monitor import resource_monitor
 import httpx
@@ -10,13 +10,37 @@ import json
 import os
 import shutil
 import asyncio
+from pathlib import Path
 
 router = APIRouter()
+
+def sanitize_filename(filename: str) -> str:
+    return Path(filename).name
+
+@router.get("/health")
+async def health():
+    return {"status": "ok"}
 
 @router.get("/models")
 async def list_models(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     manager = ModelManager(db)
-    return manager.list_models()
+    models = manager.list_models()
+    # Exclude API key for non-admins
+    safe_models = []
+    for m in models:
+        m_dict = {
+            "id": m.id,
+            "name": m.name,
+            "engine": m.engine,
+            "path": m.path,
+            "config": m.config,
+            "status": m.status,
+            "port": m.port
+        }
+        if current_user.role == "Admin":
+            m_dict["api_key"] = m.api_key
+        safe_models.append(m_dict)
+    return safe_models
 
 @router.post("/models")
 async def add_model(request: Request, db: Session = Depends(get_db), current_user: User = Depends(check_admin_role)):
@@ -56,7 +80,8 @@ async def regenerate_key(model_name: str, db: Session = Depends(get_db), current
 @router.post("/models/upload")
 async def upload_model(file: UploadFile = File(...), current_user: User = Depends(check_admin_role)):
     os.makedirs("models", exist_ok=True)
-    file_path = os.path.join("models", file.filename)
+    safe_name = sanitize_filename(file.filename)
+    file_path = os.path.join("models", safe_name)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     return {"path": file_path}
@@ -65,11 +90,10 @@ async def upload_model(file: UploadFile = File(...), current_user: User = Depend
 async def download_model(request: Request, current_user: User = Depends(check_admin_role)):
     data = await request.json()
     url = data["url"]
-    filename = url.split("/")[-1]
+    filename = sanitize_filename(url.split("/")[-1])
     os.makedirs("models", exist_ok=True)
     file_path = os.path.join("models", filename)
 
-    # Offload blocking I/O to a thread
     def download_file(url, path):
         with httpx.stream("GET", url) as response:
             with open(path, "wb") as f:
@@ -101,7 +125,6 @@ async def chat(request: Request, db: Session = Depends(get_db)):
     data = await request.json()
     model_name = data.get("model")
 
-    # Custom verification of access
     manager = ModelManager(db)
     model = manager.get_model(model_name)
     if not model:
@@ -114,8 +137,8 @@ async def chat(request: Request, db: Session = Depends(get_db)):
         key = auth_header
 
     # Check if key matches model's key OR is an admin key
-    is_admin_key = db.query(APIKey).filter(APIKey.key == key).join(User).filter(User.role == "Admin").first()
-    if key != model.api_key and not is_admin_key:
+    admin_key = db.query(APIKey).filter(APIKey.key == key).join(User).filter(User.role == "Admin").first()
+    if key != model.api_key and not admin_key:
          raise HTTPException(status_code=403, detail="Invalid API key for this model")
 
     if model.status != "running":

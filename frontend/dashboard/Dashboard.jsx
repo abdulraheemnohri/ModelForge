@@ -35,7 +35,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await api.get('/stats');
+        const response = await api.get('stats');
         setStats(response.data);
 
         const now = new Date().toLocaleTimeString();
@@ -143,7 +143,7 @@ const Dashboard = () => {
       <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
         <h2 className="text-xl font-bold mb-4">Resource History</h2>
         <div className="h-64">
-          <Line data={chartData} options={{ maintainAspectRatio: false }} />
+          <line data={chartData} options={{ maintainAspectRatio: false }} />
         </div>
       </div>
     </div>

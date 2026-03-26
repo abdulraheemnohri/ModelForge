@@ -1,2 +1,109 @@
-# ModelForge
-Self-Hosted Multi-LLM Hosting Platform
+# ModelForge: Self-Hosted Multi-LLM Hosting Platform
+
+ModelForge is a high-performance, self-hosted platform designed to run and manage multiple Large Language Models (LLMs) simultaneously on a single machine. It provides a robust backend for model isolation, unique API key access, and a real-time web dashboard for system monitoring and chat interaction.
+
+> ⚠️ **IMPORTANT SECURITY NOTE**: The default installation seeds an admin user with the key `sk_admin` and password `adminpassword`. **YOU MUST ROTATE THESE CREDENTIALS IMMEDIATELY** in the database after the first run for any production or public-facing deployment.
+
+## 🚀 Key Features
+
+- **Multi-Model Runtime**: Run multiple models (llama.cpp) in isolated worker processes.
+- **Auto-Generated API Keys**: Unique, model-specific API keys generated automatically for secure access.
+- **Model Management**: Upload local GGUF files or download them from HuggingFace URLs.
+- **Resource Monitoring**: Real-time tracking of CPU, RAM, Disk, and NVIDIA GPU/VRAM usage.
+- **Interactive Playground**: A web-based chat interface with real-time token streaming.
+- **Master Admin Access**: A master API key for managing all models and platform settings.
+- **IP/Port Binding**: Manually assign or auto-allocate ports for each model instance.
+
+---
+
+## 🛠 Installation Guide
+
+### Method 1: Docker (Recommended)
+
+Requires [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/).
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-username/modelforge.git
+   cd modelforge
+   ```
+
+2. **Setup models folder**:
+   ```bash
+   mkdir models
+   ```
+
+3. **Deploy with GPU support**:
+   Ensure you have the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) installed.
+   ```bash
+   docker-compose -f docker/docker-compose.yml up --build -d
+   ```
+
+4. **Access the Dashboard**:
+   Open your browser and go to `http://localhost:5173` (Dev) or the mapped production port.
+
+### Method 2: Local Development Setup
+
+Requires Python 3.11+ and Node.js 20+.
+
+1. **Setup the Backend**:
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r ../requirements.txt
+   uvicorn main:app --host 0.0.0.0 --port 8000
+   ```
+
+2. **Setup the Frontend**:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+---
+
+## 🖥 Hardware Requirements
+
+- **Minimum**:
+  - CPU: 8 Cores (AVX2 support recommended)
+  - RAM: 16 GB
+  - Storage: NVMe SSD for fast model loading
+- **Recommended**:
+  - CPU: 16+ Cores
+  - RAM: 64+ GB
+  - GPU: NVIDIA RTX 40xx series or A/H-series for multi-model inference
+
+---
+
+## 📂 Project Structure
+
+- `backend/`: FastAPI server, model workers, and authentication logic.
+- `frontend/`: React + Tailwind CSS dashboard and playground.
+- `models/`: Storage directory for downloaded/uploaded model files.
+- `config/`: Configuration files for initial model seeding (`models.json`).
+- `docker/`: Docker orchestration files.
+
+---
+
+## 🔑 API Usage Example
+
+Chat with a specific model using its unique key:
+
+```bash
+curl -X POST http://localhost:8000/api/chat \
+-H "Authorization: Bearer <model-specific-api-key>" \
+-H "Content-Type: application/json" \
+-d '{
+  "model": "Llama 3 8B",
+  "messages": [{"role": "user", "content": "Tell me a story about a brave knight."}],
+  "stream": true
+}'
+```
+
+---
+
+## 📜 License
+
+[MIT License](LICENSE)
