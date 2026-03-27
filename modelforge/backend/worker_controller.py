@@ -11,7 +11,7 @@ class WorkerController:
         self.workers: Dict[str, subprocess.Popen] = {}
         self.logs: Dict[str, List[str]] = {}
 
-    def start_worker(self, model_name: str, engine: str, model_path: str, port: int, config: dict = None) -> bool:
+    def start_worker(self, model_name: str, engine: str, model_path: str, port: int, config: dict) -> bool:
         if model_name in self.workers:
             return False
 
@@ -20,9 +20,8 @@ class WorkerController:
             return False
 
         cmd = [sys.executable, worker_script, "--model_path", model_path, "--port", str(port)]
-        if config:
-            for k, v in config.items():
-                cmd.extend([f"--{k}", str(v)])
+        for k, v in config.items():
+            cmd.extend([f"--{k}", str(v)])
 
         try:
             process = subprocess.Popen(
@@ -36,6 +35,7 @@ class WorkerController:
             self.workers[model_name] = process
             self.logs[model_name] = []
 
+            # Start a thread to read logs
             thread = threading.Thread(target=self._capture_logs, args=(model_name, process), daemon=True)
             thread.start()
 
@@ -52,10 +52,12 @@ class WorkerController:
     def _add_log(self, model_name: str, level: str, message: str):
         if not message: return
 
+        # Keep in memory for fast access (last 100 lines)
         if model_name not in self.logs: self.logs[model_name] = []
         self.logs[model_name].append(f"[{level}] {message}")
         self.logs[model_name] = self.logs[model_name][-100:]
 
+        # Persist to DB periodically or immediately
         db = SessionLocal()
         try:
             log_entry = ModelLog(model_name=model_name, level=level, message=message)

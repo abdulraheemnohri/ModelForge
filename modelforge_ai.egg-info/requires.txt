@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+sqlalchemy
+psutil
+pydantic
+python-multipart
+slowapi
+aiofiles
+httpx
+llama-cpp-python
+numpy
+pynvml
