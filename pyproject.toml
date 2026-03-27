@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "modelforge-ai"
+version = "0.1.0"
+authors = [
+  { name="ModelForge Team", email="info@modelforge.ai" },
+]
+description = "A self-hosted platform for running multiple LLMs simultaneously."
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "psutil",
+    "pydantic",
+    "python-multipart",
+    "slowapi",
+    "aiofiles",
+    "httpx",
+    "llama-cpp-python",
+    "numpy",
+    "pynvml",
+]
+
+[project.scripts]
+modelforge = "modelforge.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["modelforge*"]
+
+[tool.setuptools.package-data]
+modelforge = ["frontend/dist/**/*", "config/*.json"]

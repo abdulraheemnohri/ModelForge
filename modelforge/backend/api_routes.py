@@ -104,16 +104,6 @@ async def restart_model(model_name: str, db: Session = Depends(get_db), current_
     else:
         raise HTTPException(status_code=500, detail=f"Failed to restart model {model_name}")
 
-@router.post("/models/{model_name}/regenerate-key")
-async def regenerate_key(model_name: str, db: Session = Depends(get_db), current_user: User = Depends(check_admin_role)):
-    manager = ModelManager(db)
-    model = manager.get_model(model_name)
-    if not model:
-        raise HTTPException(status_code=404, detail="Model not found")
-    model.api_key = generate_api_key()
-    db.commit()
-    return {"api_key": model.api_key}
-
 @router.get("/models/{model_name}/logs")
 async def get_model_logs(model_name: str, current_user: User = Depends(get_current_user)):
     return {"logs": worker_controller.get_logs(model_name)}

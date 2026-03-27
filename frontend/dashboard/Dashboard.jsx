@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Activity, Cpu, Database, HardDrive, LayoutDashboard } from 'lucide-react';
+import { Activity, Cpu, Database, HardDrive, LayoutDashboard, BarChart3, Clock } from 'lucide-react';
 import api from '../src/api';
 import { Line } from 'react-chartjs-2';
 import {
@@ -79,14 +79,14 @@ const Dashboard = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <LayoutDashboard className="w-8 h-8" />
+        <LayoutDashboard className="w-8 h-8 text-blue-500" />
         System Dashboard
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-slate-400 font-medium">CPU Usage</h2>
+            <h2 className="text-slate-400 font-medium">System CPU</h2>
             <Cpu className="text-rose-500" />
           </div>
           <p className="text-3xl font-bold">{stats.cpu.percent}%</p>
@@ -95,7 +95,7 @@ const Dashboard = () => {
 
         <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-slate-400 font-medium">Memory Usage</h2>
+            <h2 className="text-slate-400 font-medium">System Memory</h2>
             <Activity className="text-blue-500" />
           </div>
           <p className="text-3xl font-bold">{stats.memory.percent}%</p>
@@ -114,6 +114,38 @@ const Dashboard = () => {
             {(stats.disk.free / (1024 ** 3)).toFixed(2)} GB Free
           </p>
         </div>
+      </div>
+
+      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+        <BarChart3 className="text-emerald-500" /> Active Model Instances
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {Object.entries(stats.models).map(([name, data]) => (
+          <div key={name} className="bg-slate-800 p-5 rounded-xl border border-slate-700">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="font-bold">{name}</h3>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-500 px-2 py-0.5 rounded-full uppercase">Running</span>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Process CPU</span>
+                <span className="font-mono text-emerald-400">{data.cpu_percent.toFixed(1)}%</span>
+              </div>
+              <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-emerald-500 h-full" style={{ width: `${Math.min(data.cpu_percent, 100)}%` }}></div>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Process RAM</span>
+                <span className="font-mono text-blue-400">{(data.memory_info / (1024 ** 2)).toFixed(1)} MB</span>
+              </div>
+            </div>
+          </div>
+        ))}
+        {Object.keys(stats.models).length === 0 && (
+          <div className="col-span-full py-8 text-center bg-slate-800/50 rounded-xl border border-dashed border-slate-700 text-slate-500">
+            No active model processes monitored.
+          </div>
+        )}
       </div>
 
       {stats.gpu && Array.isArray(stats.gpu) && stats.gpu.length > 0 && (
@@ -143,7 +175,7 @@ const Dashboard = () => {
       <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
         <h2 className="text-xl font-bold mb-4">Resource History</h2>
         <div className="h-64">
-          <line data={chartData} options={{ maintainAspectRatio: false }} />
+          <Line data={chartData} options={{ maintainAspectRatio: false }} />
         </div>
       </div>
     </div>
